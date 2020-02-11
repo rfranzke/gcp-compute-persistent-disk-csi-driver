@@ -76,9 +76,13 @@ func handle() {
 	mounter := mountmanager.NewSafeMounter()
 	deviceUtils := mountmanager.NewDeviceUtils()
 	statter := mountmanager.NewStatter()
-	ms, err := metadataservice.NewMetadataService()
-	if err != nil {
-		klog.Fatalf("Failed to set up metadata service: %v", err)
+
+	var ms metadataservice.MetadataService
+	if cloudProvider.MetadataServiceEnabled {
+		ms, err = metadataservice.NewMetadataService()
+		if err != nil {
+			klog.Fatalf("Failed to set up metadata service: %v", err)
+		}
 	}
 
 	err = gceDriver.SetupGCEDriver(cloudProvider, mounter, deviceUtils, ms, statter, driverName, vendorVersion)

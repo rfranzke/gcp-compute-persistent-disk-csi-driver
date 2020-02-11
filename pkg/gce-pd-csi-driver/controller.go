@@ -35,13 +35,12 @@ import (
 
 	"sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/common"
 	gce "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/compute"
-	metadataservice "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/metadata"
+	gcecloudprovider "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/compute"
 )
 
 type GCEControllerServer struct {
-	Driver          *GCEDriver
-	CloudProvider   gce.GCECompute
-	MetadataService metadataservice.MetadataService
+	Driver        *GCEDriver
+	CloudProvider *gcecloudprovider.CloudProvider
 
 	// A map storing all volumes with ongoing operations so that additional
 	// operations for that same volume (as defined by Volume Key) return an
@@ -141,7 +140,7 @@ func (gceCS *GCEControllerServer) CreateVolume(ctx context.Context, req *csi.Cre
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("CreateVolume replication type '%s' is not supported", replicationType))
 	}
 
-	volumeID, err := common.KeyToVolumeID(volKey, gceCS.MetadataService.GetProject())
+	volumeID, err := common.KeyToVolumeID(volKey, gceCS.CloudProvider.GetProject())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to convert volume key to volume ID: %v", err)
 	}
@@ -950,7 +949,7 @@ func pickZones(ctx context.Context, gceCS *GCEControllerServer, top *csi.Topolog
 			return nil, fmt.Errorf("failed to pick zones from topology: %v", err)
 		}
 	} else {
-		zones, err = getDefaultZonesInRegion(ctx, gceCS, []string{gceCS.MetadataService.GetZone()}, numZones)
+		zones, err = getDefaultZonesInRegion(ctx, gceCS, []string{gceCS.CloudProvider.GetZone()}, numZones)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default %v zones in region: %v", numZones, err)
 		}

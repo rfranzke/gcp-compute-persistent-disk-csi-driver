@@ -54,6 +54,8 @@ type CloudProvider struct {
 	zone    string
 
 	zonesCache map[string]([]string)
+
+	MetadataServiceEnabled bool
 }
 
 var _ GCECompute = &CloudProvider{}
@@ -66,6 +68,7 @@ type ConfigGlobal struct {
 	TokenURL  string `gcfg:"token-url"`
 	TokenBody string `gcfg:"token-body"`
 	ProjectId string `gcfg:"project-id"`
+	Zone      string `gcfg:"zone"`
 }
 
 func CreateCloudProvider(ctx context.Context, vendorVersion string, configPath string) (*CloudProvider, error) {
@@ -98,12 +101,30 @@ func CreateCloudProvider(ctx context.Context, vendorVersion string, configPath s
 		project:    project,
 		zone:       zone,
 		zonesCache: make(map[string]([]string)),
-	}, nil
 
+		MetadataServiceEnabled: metadataServiceEnabled(configFile),
+	}, nil
+}
+
+func (c *CloudProvider) GetZone() string {
+	return c.zone
+}
+
+func (c *CloudProvider) GetProject() string {
+	return c.project
+}
+
+func metadataServiceEnabled(config *ConfigFile) bool {
+	if config == nil {
+		return true
+	}
+	if config.Global.Zone == "" || config.Global.ProjectId == "" {
+		return true
+	}
+	return false
 }
 
 func generateTokenSource(ctx context.Context, configFile *ConfigFile) (oauth2.TokenSource, error) {
-
 	if configFile != nil && configFile.Global.TokenURL != "" && configFile.Global.TokenURL != "nil" {
 		// configFile.Global.TokenURL is defined
 		// Use AltTokenSource
@@ -184,9 +205,16 @@ func newOauthClient(ctx context.Context, tokenSource oauth2.TokenSource) (*http.
 func getProjectAndZone(config *ConfigFile) (string, string, error) {
 	var err error
 
-	zone, err := metadata.Zone()
-	if err != nil {
-		return "", "", err
+	var zone string
+	if config == nil || config.Global.Zone == "" {
+		zone, err = metadata.Zone()
+		if err != nil {
+			return "", "", err
+		}
+		klog.V(2).Infof("Using GCP zone from the Metadata server: %q", zone)
+	} else {
+		zone = config.Global.Zone
+		klog.V(2).Infof("Using GCP zone from the local GCE cloud provider config file: %q", zone)
 	}
 
 	var projectID string

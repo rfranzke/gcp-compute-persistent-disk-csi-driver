@@ -35,12 +35,11 @@ import (
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/common"
 	gce "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/compute"
-	metadataservice "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/metadata"
 )
 
 const (
-	project = metadataservice.FakeProject
-	zone    = metadataservice.FakeZone
+	project = "test-project"
+	zone    = "test-zone"
 	node    = "test-node"
 	driver  = "test-driver"
 	name    = "test-name"
@@ -56,7 +55,7 @@ var (
 	}
 	stdTopology = []*csi.Topology{
 		{
-			Segments: map[string]string{common.TopologyKeyZone: metadataservice.FakeZone},
+			Segments: map[string]string{common.TopologyKeyZone: zone},
 		},
 	}
 	testVolumeID   = fmt.Sprintf("projects/%s/zones/%s/disks/%s", project, zone, name)
@@ -435,7 +434,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			},
 			expVol: &csi.Volume{
 				CapacityBytes: common.GbToBytes(20),
-				VolumeId:      fmt.Sprintf("projects/%s/zones/topology-zone/disks/%s", metadataservice.FakeProject, name),
+				VolumeId:      fmt.Sprintf("projects/%s/zones/topology-zone/disks/%s", project, name),
 				VolumeContext: nil,
 				AccessibleTopology: []*csi.Topology{
 					{
@@ -478,7 +477,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 			},
 			expVol: &csi.Volume{
 				CapacityBytes: common.GbToBytes(20),
-				VolumeId:      fmt.Sprintf("projects/%s/zones/topology-zone2/disks/%s", metadataservice.FakeProject, name),
+				VolumeId:      fmt.Sprintf("projects/%s/zones/topology-zone2/disks/%s", project, name),
 				VolumeContext: nil,
 				AccessibleTopology: []*csi.Topology{
 					{
@@ -594,7 +593,7 @@ func TestCreateVolumeArguments(t *testing.T) {
 				VolumeContext: nil,
 				AccessibleTopology: []*csi.Topology{
 					{
-						Segments: map[string]string{common.TopologyKeyZone: metadataservice.FakeZone},
+						Segments: map[string]string{common.TopologyKeyZone: zone},
 					},
 					{
 						Segments: map[string]string{common.TopologyKeyZone: "country-region-fakesecondzone"},

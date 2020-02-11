@@ -23,7 +23,7 @@ import (
 	"k8s.io/klog"
 	"k8s.io/utils/mount"
 	common "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/common"
-	gce "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/compute"
+	gcecloudprovider "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/compute"
 	metadataservice "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/gce-cloud-provider/metadata"
 	mountmanager "sigs.k8s.io/gcp-compute-persistent-disk-csi-driver/pkg/mount-manager"
 )
@@ -45,7 +45,7 @@ func GetGCEDriver() *GCEDriver {
 	return &GCEDriver{}
 }
 
-func (gceDriver *GCEDriver) SetupGCEDriver(cloudProvider gce.GCECompute, mounter *mount.SafeFormatAndMount,
+func (gceDriver *GCEDriver) SetupGCEDriver(cloudProvider *gcecloudprovider.CloudProvider, mounter *mount.SafeFormatAndMount,
 	deviceUtils mountmanager.DeviceUtils, meta metadataservice.MetadataService, statter mountmanager.Statter, name, vendorVersion string) error {
 	if name == "" {
 		return fmt.Errorf("Driver name missing")
@@ -81,7 +81,7 @@ func (gceDriver *GCEDriver) SetupGCEDriver(cloudProvider gce.GCECompute, mounter
 	// Set up RPC Servers
 	gceDriver.ids = NewIdentityServer(gceDriver)
 	gceDriver.ns = NewNodeServer(gceDriver, mounter, deviceUtils, meta, statter)
-	gceDriver.cs = NewControllerServer(gceDriver, cloudProvider, meta)
+	gceDriver.cs = NewControllerServer(gceDriver, cloudProvider)
 
 	return nil
 }
@@ -147,12 +147,11 @@ func NewNodeServer(gceDriver *GCEDriver, mounter *mount.SafeFormatAndMount, devi
 	}
 }
 
-func NewControllerServer(gceDriver *GCEDriver, cloudProvider gce.GCECompute, meta metadataservice.MetadataService) *GCEControllerServer {
+func NewControllerServer(gceDriver *GCEDriver, cloudProvider *gcecloudprovider.CloudProvider) *GCEControllerServer {
 	return &GCEControllerServer{
-		Driver:          gceDriver,
-		CloudProvider:   cloudProvider,
-		MetadataService: meta,
-		volumeLocks:     common.NewVolumeLocks(),
+		Driver:        gceDriver,
+		CloudProvider: cloudProvider,
+		volumeLocks:   common.NewVolumeLocks(),
 	}
 }
 
