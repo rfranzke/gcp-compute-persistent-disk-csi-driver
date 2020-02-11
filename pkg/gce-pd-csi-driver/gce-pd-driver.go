@@ -80,8 +80,14 @@ func (gceDriver *GCEDriver) SetupGCEDriver(cloudProvider gce.GCECompute, mounter
 
 	// Set up RPC Servers
 	gceDriver.ids = NewIdentityServer(gceDriver)
-	gceDriver.ns = NewNodeServer(gceDriver, mounter, deviceUtils, meta, statter)
-	gceDriver.cs = NewControllerServer(gceDriver, cloudProvider)
+
+	if mounter != nil && deviceUtils != nil && meta != nil && statter != nil {
+		gceDriver.ns = NewNodeServer(gceDriver, mounter, deviceUtils, meta, statter)
+	}
+
+	if cloudProvider != nil {
+		gceDriver.cs = NewControllerServer(gceDriver, cloudProvider)
+	}
 
 	return nil
 }
