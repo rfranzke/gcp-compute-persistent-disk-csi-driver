@@ -38,6 +38,9 @@ const (
 )
 
 type GCECompute interface {
+	// Metadata information
+	GetProject() string
+	GetZone() string
 	// Disk Methods
 	GetDisk(ctx context.Context, volumeKey *meta.Key) (*CloudDisk, error)
 	RepairUnderspecifiedVolumeKey(ctx context.Context, volumeKey *meta.Key) (*meta.Key, error)
@@ -61,6 +64,16 @@ type GCECompute interface {
 	GetSnapshot(ctx context.Context, snapshotName string) (*computev1.Snapshot, error)
 	CreateSnapshot(ctx context.Context, volKey *meta.Key, snapshotName string) (*computev1.Snapshot, error)
 	DeleteSnapshot(ctx context.Context, snapshotName string) error
+}
+
+// GetProject returns the project that was used to instantiate this GCE client.
+func (cloud *CloudProvider) GetProject() string {
+	return cloud.project
+}
+
+// GetZone returns the zone that was used to instantiate this GCE client.
+func (cloud *CloudProvider) GetZone() string {
+	return cloud.zone
 }
 
 // ListDisks lists disks based on maxEntries and pageToken only in the project
